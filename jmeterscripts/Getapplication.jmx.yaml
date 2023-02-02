@@ -1,0 +1,123 @@
+---
+execution:
+- concurrency: 1
+  iterations: 1
+  ramp-up: 0s
+  scenario: Tokenization-Http
+scenarios:
+  Tokenization-Http:
+    concurrent-pool-size: 6
+    default-address: /
+    headers:
+      User-Agent: Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36
+      sec-ch-ua: '"Not_A Brand";v="99", "Google Chrome";v="109", "Chromium";v="109"'
+      sec-ch-ua-mobile: ?0
+      sec-ch-ua-platform: '"Windows"'
+    requests:
+    - do:
+      - extract-regexp:
+          dmpid:
+            default: ''
+            match-no: 1
+            regexp: code&dmpReqID=(.*?)&
+            template: $1$
+        follow-redirects: true
+        headers:
+          Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+          Upgrade-Insecure-Requests: '1'
+        label: https://console.dms.int-prod.usw2.ficoanalyticcloud.com/com.fico.dmp.manager/rest/dmp/runtime/user
+        method: GET
+        think-time: 0ms
+        url: https://console.dms.int-prod.usw2.ficoanalyticcloud.com/com.fico.dmp.manager/rest/dmp/runtime/user
+      include-timers: false
+      transaction: Test
+    - do:
+      - body: '{"username":"Perfuser01_dbaas@fico.com","options":{"warnBeforePasswordExpired":true,"multiOptionalFactorEnroll":true},"password":"Welcome@123"}'
+        extract-regexp:
+          SessionToken:
+            default: ''
+            match-no: 1
+            regexp: '"sessionToken":"(.*?)"'
+            template: $1$
+        follow-redirects: true
+        headers:
+          Accept: application/json
+          Content-Type: application/json
+          X-Okta-User-Agent-Extended: okta-signin-widget-2.11.0
+        label: https://login.ort.ficoanalyticcloud.com/api/v1/authn
+        method: POST
+        url: https://login.ort.ficoanalyticcloud.com/api/v1/authn
+      - body:
+          checkAccountSetupComplete: 'true'
+          redirectUrl: https://login.ort.ficoanalyticcloud.com/app/facdev_ficodecisionmanagementplatform3intprodconsole_1/exk1ivc14wfzxOdIo1d8/sso/saml?RelayState=https%3A%2F%2Fiam-svc.dms.int-prod.usw2.ficoanalyticcloud.com%2Fopenam%2Foauth2%2Fauthorize%3Fresponse_type%3Dcode%26dmpReqID%3D${dmpid}%26client_id%3DDMP_Catalog%26redirect_uri%3Dhttps%253A%252F%252Fconsole.dms.int-prod.usw2.ficoanalyticcloud.com%252Fcom.fico.fusion%252FOAuthResponseCodeConsumer
+          token: ${SessionToken}
+        extract-regexp:
+          SAMLID:
+            default: ''
+            match-no: 1
+            regexp: '"SAMLResponse" type="hidden" value="(.*?)"'
+            template: $1$
+        follow-redirects: true
+        headers:
+          Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+          Upgrade-Insecure-Requests: '1'
+        label: https://login.ort.ficoanalyticcloud.com/login/sessionCookieRedirect
+        method: GET
+        think-time: 507ms
+        url: https://login.ort.ficoanalyticcloud.com/login/sessionCookieRedirect
+      - body:
+          RelayState: https://iam-svc.dms.int-prod.usw2.ficoanalyticcloud.com/openam/oauth2/authorize?response_type=code&dmpReqID=${dmpid}&client_id=DMP_Catalog&redirect_uri=https%3A%2F%2Fconsole.dms.int-prod.usw2.ficoanalyticcloud.com%2Fcom.fico.fusion%2FOAuthResponseCodeConsumer
+          SAMLResponse: ${SAMLID}
+        follow-redirects: true
+        headers:
+          Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+          Content-Type: application/x-www-form-urlencoded
+          Upgrade-Insecure-Requests: '1'
+        label: https://iam-svc.dms.int-prod.usw2.ficoanalyticcloud.com/openam/Consumer/metaAlias/sp
+        method: POST
+        think-time: 607ms
+        url: https://iam-svc.dms.int-prod.usw2.ficoanalyticcloud.com/openam/Consumer/metaAlias/sp
+      - follow-redirects: true
+        headers:
+          Accept: text/html, */*; q=0.01
+          X-Requested-With: XMLHttpRequest
+        label: https://iam-svc.dms.int-prod.usw2.ficoanalyticcloud.com/openam/getRequestId.jsp
+        method: GET
+        url: https://iam-svc.dms.int-prod.usw2.ficoanalyticcloud.com/openam/getRequestId.jsp?https://iam-svc.dms.int-prod.usw2.ficoanalyticcloud.com/openam/oauth2/authorize=
+      - body:
+          client_id: DMP_Catalog
+          decision: Allow
+          redirect_uri: https://console.dms.int-prod.usw2.ficoanalyticcloud.com/com.fico.fusion/OAuthResponseCodeConsumer
+          response_type: code
+          scope: dmpReqID:${dmpid}
+        extract-regexp:
+          AcessToken:
+            default: ''
+            match-no: 1
+            regexp: '"accessToken" : "(.*?)"'
+            template: $1$
+        follow-redirects: true
+        headers:
+          Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+          Content-Type: application/x-www-form-urlencoded
+          Upgrade-Insecure-Requests: '1'
+        label: https://iam-svc.dms.int-prod.usw2.ficoanalyticcloud.com/openam/oauth2/authorize?response_type=code&dmpReqID=abb716f2-720&client_id=DMP_Catalog&redirect_uri=https%3A%2F%2Fconsole.dms.int-prod.usw2.ficoanalyticcloud.com%2Fcom.fico.fusion%2FOAuthResponseCodeConsumer
+        method: POST
+        think-time: 93ms
+        url: https://iam-svc.dms.int-prod.usw2.ficoanalyticcloud.com/openam/oauth2/authorize?response_type=code&dmpReqID=${dmpid}&client_id=DMP_Catalog&redirect_uri=https%3A%2F%2Fconsole.dms.int-prod.usw2.ficoanalyticcloud.com%2Fcom.fico.fusion%2FOAuthResponseCodeConsumer
+      include-timers: false
+      transaction: Login
+    - do:
+      - follow-redirects: true
+        headers:
+          Authorization: Bearer ${AcessToken}
+        label: Getapplication
+        method: GET
+        url: https://database-service-3i6ocgihb8.dms.int-prod.usw2.ficoanalyticcloud.com:443/databases/omperformancedb/entities/applications/26677/databases/omperformancedb/entities/applications/26677
+      include-timers: false
+      transaction: Getapplication
+    retrieve-resources: true
+    store-cache: true
+    store-cookie: true
+    use-dns-cache-mgr: true
+
