@@ -4,9 +4,9 @@ node {
    }
    stage('Performance Tests') {
     parallel(
-        BlazeMeterTest: {
-            dir ('C:\\Users\\kumar12\\Taurus Resources') {
-               bat 'bzt taurus_jmeter_script3.yml -report'
+         BlazeMeterTest: {
+            dir ('C:\\Users\\LakshmiNarayanaRaoCh\\AppData\\Local\\Programs\\Python\\Python311\\Scripts') {
+               bat 'bzt Tokenscript.jmx.yaml -report'
             }
         },
         Analysis: {
